@@ -1,53 +1,28 @@
 import javax.swing.*;
 import java.awt.*;
 
-class AlarmDisplay extends JFrame {
+class ControlCenter extends JFrame {
 
-    private JLabel lblTitle;
-    private JPanel devicePanel;
     private JButton btnAddDevice;
-    int deviceCount;
+    private JLabel lblTitle;
 
-    AlarmDisplay() {
-
-        setSize(400,300);
-        setTitle("Control Room");
+    ControlCenter() {
+        setTitle("Control Center");
+        setSize(450, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout(10,10));
+        setLayout(new BorderLayout());
 
         lblTitle = new JLabel("Water Level Alarm System");
-        lblTitle.setFont(new Font("",1,20));
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 20));
         lblTitle.setHorizontalAlignment(JLabel.CENTER);
-
-        add(lblTitle,BorderLayout.NORTH);
-
-        devicePanel = new JPanel();
-        devicePanel.setLayout(new GridLayout(0,1));
-
-        add(new JScrollPane(devicePanel),BorderLayout.CENTER);
+        add(lblTitle, BorderLayout.NORTH);
 
         btnAddDevice = new JButton("Add Device");
-        add(btnAddDevice, BorderLayout.SOUTH);
+        add(btnAddDevice, BorderLayout.CENTER);
 
         btnAddDevice.addActionListener(e -> {
-            deviceCount++;
-            String deviceId = "S00"+deviceCount;
-
-            JLabel lblDevice = new JLabel(deviceId);
-            lblDevice.setFont(new Font("",1,15));
-
-            JButton btnOpen = new JButton("Open Device");
-
-            JPanel row = new JPanel(new BorderLayout(10,5));
-            row.add(lblDevice, BorderLayout.CENTER);
-            row.add(btnOpen, BorderLayout.EAST);
-
-            devicePanel.add(row);
-            devicePanel.revalidate();
-            devicePanel.repaint();
-
-            btnOpen.addActionListener(event -> new DeviceWindow());
+            new DeviceWindow().setVisible(true);
         });
 
         setVisible(true);
@@ -57,12 +32,13 @@ class AlarmDisplay extends JFrame {
 class DeviceWindow extends JFrame {
 
     private JLabel lblTitle;
-    private JLabel lblStatus;
-    private JLabel lblAlarm;
     private JSlider slider;
+    private JButton btnView;
 
-    DeviceWindow (){
+    private AlertWindow alertWindow;
+    private AlarmWindow alarmWindow;
 
+    DeviceWindow() {
         setTitle("Device");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -70,63 +46,116 @@ class DeviceWindow extends JFrame {
         setLayout(new BorderLayout(10, 10));
 
         lblTitle = new JLabel("Water Level: 10%");
-        lblTitle.setFont(new Font("",1, 20));
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 20));
         lblTitle.setHorizontalAlignment(JLabel.CENTER);
-
         add(lblTitle, BorderLayout.NORTH);
 
-        slider = new JSlider(0,100);
 
-        JPanel centerPanel = new JPanel(new GridLayout(0, 1));
+        JPanel pnl1 = new JPanel(new GridLayout(4, 1, 5, 5));
+        
+        slider = new JSlider(0, 100, 10);
+        pnl1.add(slider);
+        
+        btnView = new JButton("View Device");
+        pnl1.add(btnView);
+        
+        add(pnl1,BorderLayout.CENTER);
+        
+        alertWindow = new AlertWindow(slider.getValue());
+        alarmWindow = new AlarmWindow(slider.getValue());
 
-        centerPanel.add(slider);
-
-        lblStatus = new JLabel("Water Level Normal");
-        lblStatus.setHorizontalAlignment(JLabel.CENTER);
-        lblStatus.setFont(new Font("",1, 16));
-
-        lblAlarm = new JLabel("Alarm: OFF");
-        lblAlarm.setHorizontalAlignment(JLabel.CENTER);
-
-        centerPanel.add(lblStatus);
-        centerPanel.add(lblAlarm);
-
-        add(centerPanel,BorderLayout.CENTER);
+        btnView.addActionListener(e -> {
+            alertWindow.setVisible(true);
+            alarmWindow.setVisible(true);
+        });
 
         slider.addChangeListener(e -> {
-		int level = slider.getValue();
+            int level = slider.getValue();
+            lblTitle.setText("Water Level: "+level+"%");
 
-		lblTitle.setText("Water Level: " + level + "%");
-
-		if (level >= 75) {
-			lblStatus.setText("HIGH WATER LEVEL!");
-			lblStatus.setForeground(Color.RED);
-
-			lblAlarm.setText("Alarm: ON");
-			lblAlarm.setForeground(Color.RED);
-
-		} else if (level >= 60) {
-			lblStatus.setText("HIGH WATER LEVEL!");
-			lblStatus.setForeground(Color.RED);
-
-			lblAlarm.setText("Alarm: OFF");
-			lblAlarm.setForeground(Color.BLACK);
-
-		} else {
-			lblStatus.setText("Water Level Normal");
-			lblStatus.setForeground(Color.GREEN.darker());
-
-			lblAlarm.setText("Alarm: OFF");
-			lblAlarm.setForeground(Color.BLACK);
-		}
-	});
+            alertWindow.updateLevel(level);
+            alarmWindow.updateLevel(level);
+        });
 
         setVisible(true);
     }
 }
 
+class AlertWindow extends JFrame {
+
+    private JLabel lblTitle;
+    private JLabel lblStatus;
+
+    AlertWindow(int level) {
+        setTitle("Water Level Alert");
+        setSize(400, 200);
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new GridLayout(2, 1));
+
+        lblTitle = new JLabel();
+        lblTitle.setHorizontalAlignment(JLabel.CENTER);
+        lblTitle.setFont(new Font("",1, 20));
+		add(lblTitle);
+
+        lblStatus = new JLabel();
+        lblStatus.setHorizontalAlignment(JLabel.CENTER);
+        lblStatus.setFont(new Font("",1, 16));
+        add(lblStatus);
+
+        updateLevel(level);
+    }
+
+    void updateLevel(int level) {
+        if (level >= 75) {
+            lblStatus.setText("HIGH WATER LEVEL!");
+            lblStatus.setForeground(Color.RED);
+        } else {
+            lblStatus.setText("Water Level Normal");
+            lblStatus.setForeground(Color.GREEN);
+        }
+    }
+}
+
+class AlarmWindow extends JFrame {
+
+    private JLabel lblTitle;
+    private JLabel lblStatus;
+
+    AlarmWindow(int level) {
+        setTitle("Water Level Alarm");
+        setSize(400, 200);
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new GridLayout(2, 1));
+
+        lblTitle = new JLabel();
+        lblTitle.setHorizontalAlignment(JLabel.CENTER);
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 20));
+
+        lblStatus = new JLabel();
+        lblStatus.setHorizontalAlignment(JLabel.CENTER);
+        lblStatus.setFont(new Font("Arial", Font.BOLD, 16));
+
+        add(lblTitle);
+        add(lblStatus);
+
+        updateLevel(level);
+    }
+
+    void updateLevel(int level) {
+        if (level >= 80) {
+            lblStatus.setText("Alarm ON!");
+            lblStatus.setForeground(Color.RED);
+        } else {
+            lblStatus.setText("Alarm OFF!");
+            lblStatus.setForeground(Color.GREEN.darker());
+        }
+    }
+}
+
 class Demo {
     public static void main(String[] args) {
-        new AlarmDisplay();
+       new ControlCenter();
     }
 }
